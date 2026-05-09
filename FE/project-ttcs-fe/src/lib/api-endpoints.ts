@@ -25,6 +25,8 @@ import type {
   Order,
   OrderQueryParams,
   OrderRequest,
+  PaymentMethod,
+  PaymentResponse,
   Product,
   ProductImage,
   ProductQueryParams,
@@ -164,7 +166,7 @@ export const branchApi = {
 export const orderApi = {
   create: (data: OrderRequest) =>
     apiClient.POST<Order>("/api/v1/me/orders", data, { auth: true }),
-  getMyOrders: () => apiClient.GET<Order[]>("/api/v1/me/orders", { auth: true }),
+  getMyOrders: () => apiClient.GET<PageOrder>("/api/v1/me/orders", { auth: true }),
   getMyOrderById: (id: number) =>
     apiClient.GET<Order>(`/api/v1/me/orders/${id}`, { auth: true }),
   cancelMyOrder: (id: number) =>
@@ -183,6 +185,14 @@ export const orderApi = {
     apiClient.GET<DashboardStats>("/api/v1/admin/orders/dashboard/stats", {
       auth: true,
     }),
+};
+
+export const paymentApi = {
+  createPaymentUrl: (orderId: number, method: PaymentMethod) =>
+    apiClient.GET<PaymentResponse>(
+      `/api/v1/payments/create-url/${orderId}?method=${encodeURIComponent(method)}`,
+      { auth: true }
+    ),
 };
 
 export const voucherApi = {

@@ -21,10 +21,47 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { branchApi, orderApi, voucherApi } from "@/lib/api-endpoints";
+import { branchApi, orderApi, paymentApi, voucherApi } from "@/lib/api-endpoints";
 import type { ApiError } from "@/lib/api";
 import type { BranchFulfillment, PaymentMethod, Voucher } from "@/types/api";
 import { calculateVoucherDiscount, formatCurrency, formatVoucherValue } from "@/lib/format";
+
+const paymentOptions: Array<{
+  method: PaymentMethod;
+  name: string;
+  description: string;
+  badge: string;
+  color: string;
+}> = [
+  {
+    method: "COD",
+    name: "Thanh toán khi nhận hàng",
+    description: "Nhận laptop rồi thanh toán trực tiếp tại nhà.",
+    badge: "COD",
+    color: "border-slate-300 bg-white",
+  },
+  {
+    method: "VNPAY",
+    name: "VNPay",
+    description: "Quét QR hoặc thanh toán qua ngân hàng nội địa.",
+    badge: "VN",
+    color: "border-blue-200 bg-blue-50",
+  },
+  {
+    method: "ZALOPAY",
+    name: "ZaloPay",
+    description: "Chuyển sang ví ZaloPay để hoàn tất giao dịch.",
+    badge: "ZP",
+    color: "border-cyan-200 bg-cyan-50",
+  },
+  {
+    method: "MOMO",
+    name: "MoMo",
+    description: "Thanh toán nhanh bằng ví MoMo.",
+    badge: "MM",
+    color: "border-pink-200 bg-pink-50",
+  },
+];
 
 function CheckoutForm() {
   const { cart, totalItems, totalPrice, clearCart } = useCart();
@@ -35,7 +72,7 @@ function CheckoutForm() {
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
-  const [paymentMethod] = useState<PaymentMethod>("COD");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
@@ -163,12 +200,30 @@ function CheckoutForm() {
     setError(null);
 
     try {
-      await orderApi.create({
+      const order = await orderApi.create({
         branchId: selectedBranchId,
         items: orderItems,
         paymentMethod,
         voucherCode: voucherCode.trim() || undefined,
       });
+
+      if (paymentMethod !== "COD") {
+        if (!order.id) {
+          setError("Đơn hàng đã tạo nhưng chưa có mã đơn để mở cổng thanh toán.");
+          return;
+        }
+
+        const payment = await paymentApi.createPaymentUrl(order.id, paymentMethod);
+        if (!payment.paymentUrl) {
+          setError(payment.message || "Không lấy được đường dẫn thanh toán.");
+          return;
+        }
+
+        await clearCart();
+        window.location.href = payment.paymentUrl;
+        return;
+      }
+
       await clearCart();
       setIsSuccess(true);
     } catch (err) {
@@ -435,19 +490,52 @@ function CheckoutForm() {
                   ) : null}
                 </div>
 
-                <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl space-y-4">
+                <div className="p-6 bg-slate-50 border border-slate-200 rounded-3xl space-y-4">
                   <h3 className="text-slate-900 font-black text-sm flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-blue-600" />
                     Phương thức thanh toán
                   </h3>
-                  <div className="flex items-center gap-4 bg-white p-4 rounded-xl border-2 border-blue-600 shadow-sm">
-                    <div className="w-4 h-4 rounded-full border-4 border-blue-600" />
-                    <span className="font-bold text-slate-900 text-sm">
-                      Thanh toán khi nhận hàng (COD)
-                    </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {paymentOptions.map((option) => {
+                      const selected = paymentMethod === option.method;
+
+                      return (
+                        <button
+                          key={option.method}
+                          type="button"
+                          onClick={() => setPaymentMethod(option.method)}
+                          className={`text-left p-4 rounded-2xl border-2 transition ${
+                            selected
+                              ? `${option.color} shadow-sm ring-4 ring-white`
+                              : "border-slate-200 bg-white hover:border-blue-200"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                                selected
+                                  ? "bg-slate-900 text-white"
+                                  : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {option.badge}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block font-black text-slate-900 text-sm">
+                                {option.name}
+                              </span>
+                              <span className="block text-xs text-slate-500 mt-1 leading-relaxed">
+                                {option.description}
+                              </span>
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                    Payload đặt hàng hiện hỗ trợ branchId, items, voucherCode và paymentMethod
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    COD sẽ hoàn tất đơn ngay. VNPay, ZaloPay và MoMo sẽ chuyển bạn sang
+                    cổng thanh toán sau khi tạo đơn thành công.
                   </p>
                 </div>
               </div>
@@ -509,6 +597,12 @@ function CheckoutForm() {
                     {selectedBranch?.branchName || selectedBranch?.name || "Chưa chọn"}
                   </span>
                 </div>
+                <div className="flex justify-between text-slate-500 text-sm">
+                  <span>Thanh toán:</span>
+                  <span className="font-bold text-slate-900">
+                    {paymentOptions.find((option) => option.method === paymentMethod)?.name}
+                  </span>
+                </div>
               </div>
 
               <div className="pt-6 border-t border-slate-100 flex justify-between items-end mb-10">
@@ -530,7 +624,11 @@ function CheckoutForm() {
                 disabled={isLoading || isLoadingBranches || !selectedBranchId}
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 ring-8 ring-blue-50 group disabled:opacity-70 disabled:grayscale disabled:ring-0"
               >
-                {isLoading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}
+                {isLoading
+                  ? "ĐANG XỬ LÝ..."
+                  : paymentMethod === "COD"
+                  ? "XÁC NHẬN ĐẶT HÀNG"
+                  : "TIẾP TỤC THANH TOÁN"}
                 {!isLoading ? (
                   <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 ) : null}

@@ -15,9 +15,13 @@ import {
 } from "lucide-react";
 import { orderApi } from "@/lib/api-endpoints";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import type { Order } from "@/types/api";
+import type { Order, PageOrder } from "@/types/api";
 import type { ApiError } from "@/lib/api";
 import { formatCurrency, getOrderStatusClasses, getOrderStatusLabel } from "@/lib/format";
+
+function getOrdersFromResponse(response: PageOrder | Order[]) {
+  return Array.isArray(response) ? response : response.content || [];
+}
 
 function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -30,7 +34,7 @@ function OrdersList() {
       setIsLoading(true);
       setError(null);
       const response = await orderApi.getMyOrders();
-      setOrders(response);
+      setOrders(getOrdersFromResponse(response));
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError?.message || "Không thể tải danh sách đơn hàng.");

@@ -8,7 +8,7 @@ export type OrderStatus =
   | "CANCELLED"
   | "FAILED";
 
-export type PaymentMethod = "COD" | "VNPAY" | "MOMO" | "STRIPE";
+export type PaymentMethod = "COD" | "VNPAY" | "MOMO" | "ZALOPAY" | "STRIPE";
 
 export type FulfillmentStatus =
   | "FULLY_AVAILABLE"
@@ -127,11 +127,19 @@ export interface Order {
   userId?: number;
   branchId?: number;
   status?: OrderStatus | string;
+  paymentMethod?: PaymentMethod | string;
+  paymentStatus?: string;
   totalPrice?: number;
   discountAmount?: number;
   voucherCode?: string;
   createdAt?: string;
   items?: OrderItem[];
+}
+
+export interface PaymentResponse {
+  paymentUrl?: string;
+  status?: string;
+  message?: string;
 }
 
 export interface Voucher {
