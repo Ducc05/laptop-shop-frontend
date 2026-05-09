@@ -131,9 +131,9 @@ export const Header = () => {
                     Voucher của tôi
                   </Link>
                   {(user.role === "ADMIN" || user.role === "MANAGER") && (
-                    <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition text-sm font-bold">
+                    <Link href={user.role === "ADMIN" ? "/admin" : "/manager"} onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition text-sm font-bold">
                        <ShieldAlert size={16} />
-                       Quản trị hệ thống
+                       {user.role === "ADMIN" ? "Quản trị hệ thống" : "Quản lý chi nhánh"}
                     </Link>
                   )}
                   <button onClick={() => { logout(); setIsUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-50 text-red-600 rounded-lg transition text-sm text-left">

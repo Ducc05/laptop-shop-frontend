@@ -14,6 +14,10 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     if (!isLoading && !user) {
       router.push("/user/login");
     }
+
+    if (!isLoading && user?.role === "MANAGER") {
+      router.push("/manager");
+    }
   }, [user, isLoading, router]);
 
   if (isLoading) {
@@ -23,7 +27,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  const isAdmin = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const isAdmin = user?.role === "ADMIN";
 
   if (!user || !isAdmin) {
     return (

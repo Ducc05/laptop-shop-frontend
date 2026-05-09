@@ -22,6 +22,7 @@ import type {
   ForgotPasswordRequest,
   GoogleLoginRequest,
   LoginRequest,
+  LowStock,
   Order,
   OrderQueryParams,
   OrderRequest,
@@ -175,9 +176,19 @@ export const orderApi = {
     apiClient.GET<PageOrder>(`/api/v1/admin/orders${toQueryString(params)}`, {
       auth: true,
     }),
+  getAllManager: (params?: OrderQueryParams) =>
+    apiClient.GET<PageOrder>(`/api/v1/manager/orders${toQueryString(params)}`, {
+      auth: true,
+    }),
   updateStatus: (id: number, status: string) =>
     apiClient.PUT(
       `/api/v1/admin/orders/${id}/status?status=${encodeURIComponent(status)}`,
+      undefined,
+      { auth: true }
+    ),
+  updateManagerStatus: (id: number, status: string) =>
+    apiClient.PUT(
+      `/api/v1/manager/orders/${id}/status?status=${encodeURIComponent(status)}`,
       undefined,
       { auth: true }
     ),
@@ -185,6 +196,23 @@ export const orderApi = {
     apiClient.GET<DashboardStats>("/api/v1/admin/orders/dashboard/stats", {
       auth: true,
     }),
+};
+
+export const managerDashboardApi = {
+  getStats: () =>
+    apiClient.GET<DashboardStats>("/api/v1/manager/dashboard/stats", {
+      auth: true,
+    }),
+  getLowStock: () =>
+    apiClient.GET<LowStock[]>("/api/v1/manager/dashboard/low-stock", {
+      auth: true,
+    }),
+  updateInventory: (variantId: number, quantity: number) =>
+    apiClient.PUT(
+      `/api/v1/manager/inventory/${variantId}?quantity=${quantity}`,
+      undefined,
+      { auth: true }
+    ),
 };
 
 export const paymentApi = {
@@ -205,12 +233,22 @@ export const voucherApi = {
     apiClient.GET<PageVoucher>(`/api/v1/admin/vouchers${toQueryString(params)}`, {
       auth: true,
     }),
+  getAllManager: (params?: { page?: number; size?: number }) =>
+    apiClient.GET<PageVoucher>(`/api/v1/manager/vouchers${toQueryString(params)}`, {
+      auth: true,
+    }),
   create: (data: Voucher) =>
     apiClient.POST<Voucher>("/api/v1/admin/vouchers", data, { auth: true }),
+  createManager: (data: Voucher) =>
+    apiClient.POST<Voucher>("/api/v1/manager/vouchers", data, { auth: true }),
   update: (id: number, data: Voucher) =>
     apiClient.PUT<Voucher>(`/api/v1/admin/vouchers/${id}`, data, { auth: true }),
+  updateManager: (id: number, data: Voucher) =>
+    apiClient.PUT<Voucher>(`/api/v1/manager/vouchers/${id}`, data, { auth: true }),
   delete: (id: number) =>
     apiClient.DELETE(`/api/v1/admin/vouchers/${id}`, { auth: true }),
+  deleteManager: (id: number) =>
+    apiClient.DELETE(`/api/v1/manager/vouchers/${id}`, { auth: true }),
 };
 
 export const reviewApi = {

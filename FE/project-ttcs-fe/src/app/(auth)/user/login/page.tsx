@@ -36,7 +36,19 @@ function UserLoginContent() {
     setSuccess(`Đăng nhập thành công: ${res.username}`);
 
     const callbackUrl = searchParams.get("callbackUrl");
-    router.push(callbackUrl ? decodeURIComponent(callbackUrl) : "/");
+    const role = res.role ?? res.user?.role;
+    const fallbackUrl = role === "ADMIN" ? "/admin" : role === "MANAGER" ? "/manager" : "/";
+    let targetUrl = callbackUrl ? decodeURIComponent(callbackUrl) : fallbackUrl;
+
+    if (role === "MANAGER" && targetUrl.startsWith("/admin")) {
+      targetUrl = "/manager";
+    }
+
+    if (role === "ADMIN" && targetUrl.startsWith("/manager")) {
+      targetUrl = "/admin";
+    }
+
+    router.push(targetUrl);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
