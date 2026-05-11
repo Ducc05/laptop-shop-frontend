@@ -204,6 +204,23 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface AiChatRequest {
+  message: string;
+  limit?: number;
+}
+
+export interface AiProductSuggestion {
+  id?: number;
+  name?: string;
+  brandName?: string;
+  categoryName?: string;
+}
+
+export interface AiChatResponse {
+  reply?: string;
+  suggestions?: AiProductSuggestion[];
+}
+
 export interface UpdateProfileRequest {
   fullName?: string;
   phoneNumber?: string;

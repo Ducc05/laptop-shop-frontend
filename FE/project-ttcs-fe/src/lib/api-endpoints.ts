@@ -28,6 +28,8 @@ import type {
   OrderRequest,
   PaymentMethod,
   PaymentResponse,
+  AiChatRequest,
+  AiChatResponse,
   Product,
   ProductImage,
   ProductQueryParams,
@@ -74,6 +76,11 @@ export const authApi = {
     apiClient.POST<AuthResponse>("/api/v1/auth/google", data),
   refreshToken: (data: RefreshTokenRequest) =>
     apiClient.POST<AuthResponse>("/api/v1/auth/refresh-token", data),
+};
+
+export const aiApi = {
+  chat: (data: AiChatRequest) =>
+    apiClient.POST<AiChatResponse>("/api/v1/public/ai/chat", data),
 };
 
 export const productApi = {

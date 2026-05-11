@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import React from "react";
 import { Header } from "@/app/components/header/Header";
 import { Footer } from "@/app/components/footer/Footer";
+import { AiChatWidget } from "@/app/components/common/AiChatWidget";
 
 export const metadata: Metadata = {
   title: "HĐP STORE",
@@ -18,6 +19,7 @@ export default function MainLayout({
       <Header />
       {children}
       <Footer />
+      <AiChatWidget />
     </>
   );
 }
