@@ -15,7 +15,8 @@ import {
   Truck, 
   Clock,
   ChevronRight,
-  Star
+  Star,
+  MapPin
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
@@ -135,6 +136,25 @@ export default function ProductDetailPage() {
     { label: "VGA", val: getSpecValue(product, "vga"), icon: <Gamepad2 className="w-5 h-5 text-blue-600" /> },
   ].filter(i => i.val);
 
+  const branchStocks = Object.values(
+    (product.variants || [])
+      .flatMap((variant) => variant.inventories || [])
+      .filter((inventory) => (inventory.quantity || 0) > 0)
+      .reduce<Record<string, { branchName: string; quantity: number }>>((result, inventory) => {
+        const key = String(inventory.branchId || inventory.branchName || "unknown");
+        const current = result[key] || {
+          branchName: inventory.branchName || "Chi nhánh",
+          quantity: 0,
+        };
+
+        result[key] = {
+          branchName: current.branchName,
+          quantity: current.quantity + (inventory.quantity || 0),
+        };
+        return result;
+      }, {})
+  );
+
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
       <div className="max-w-[1200px] mx-auto px-6 py-8">
@@ -223,6 +243,28 @@ export default function ProductDetailPage() {
                   }).format(product.variants?.[0]?.price || 0)}
                 </p>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full translate-x-12 translate-y-[-12px]" />
+              </div>
+
+              <div className="mb-8">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+                  Còn hàng tại chi nhánh
+                </p>
+                {branchStocks.length > 0 ? (
+                  <div className="flex flex-col items-start gap-2">
+                    {branchStocks.map((stock) => (
+                      <span
+                        key={stock.branchName}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700"
+                      >
+                        <MapPin className="w-3 h-3" />
+                        {stock.branchName}
+                        <span className="font-black">({stock.quantity})</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">Chưa có thông tin tồn kho.</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-3 mb-8">
