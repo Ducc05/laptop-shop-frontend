@@ -103,9 +103,7 @@ function ProfileContent() {
                   <h2 className="text-lg font-black text-slate-900 tracking-tighter">
                     Chi tiết tài khoản
                   </h2>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Dữ liệu đang được lấy trực tiếp từ `GET /api/v1/me/profile`.
-                  </p>
+                  
                 </div>
                 <div className="flex items-center gap-3">
                   <Link
@@ -255,8 +253,7 @@ function ProfileContent() {
                     Đơn hàng của bạn
                   </h3>
                   <p className="text-slate-400 text-sm">
-                    Kiểm tra lịch sử mua hàng và trạng thái xử lý theo dữ liệu thật
-                    từ `GET /api/v1/me/orders`.
+                    Kiểm tra lịch sử mua hàng và trạng thái xử lý
                   </p>
                 </div>
                 <Link

@@ -58,7 +58,7 @@ export default function HomePage() {
           <div className="relative z-10 max-w-lg">
             <span className="inline-flex items-center gap-2 bg-blue-600/30 text-blue-400 text-xs px-3 py-1.5 rounded-full font-bold border border-blue-500/30">
               <Star className="w-3.5 h-3.5 fill-blue-400" />
-              NEW ARRIVALS 2026
+              SẢN PHẨM MỚI 2026
             </span>
 
             <h1 className="text-5xl font-black mt-6 mb-6 leading-tight tracking-tighter">

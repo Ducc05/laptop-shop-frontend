@@ -42,9 +42,8 @@ export const Footer = () => {
           <div>
             <h4 className="text-white font-bold mb-6">Sản phẩm</h4>
             <ul className="space-y-4 text-sm">
-              <li><a href="#" className="hover:text-white transition">Laptop Gaming</a></li>
-              <li><a href="#" className="hover:text-white transition">Laptop Văn phòng</a></li>
-              <li><a href="#" className="hover:text-white transition">MacBook</a></li>
+              <li><a href="/product/list?categoryId=1" className="hover:text-white transition">Laptop Gaming</a></li>
+              <li><a href="/product/list?categoryId=2" className="hover:text-white transition">Laptop Văn phòng</a></li>
               <li><a href="#" className="hover:text-white transition">Linh kiện & Phụ kiện</a></li>
             </ul>
           </div>
@@ -64,7 +63,7 @@ export const Footer = () => {
             <div className="space-y-4 text-sm">
               <div className="flex items-start gap-4">
                 <MapPin className="w-5 h-5 text-blue-500 shrink-0" />
-                <span>Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội</span>
+                <span>Số 1 Nguyễn Trãi, Hà Đông, Hà Nội</span>
               </div>
               <div className="flex items-center gap-4">
                 <Phone className="w-5 h-5 text-blue-500 shrink-0" />

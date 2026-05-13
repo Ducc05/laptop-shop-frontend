@@ -6,12 +6,8 @@ import { Brand } from "@/types/api";
 import { 
   Plus, 
   Search, 
-  Edit2, 
-  Trash2, 
   Award, 
   X, 
-  Check, 
-  AlertCircle,
   Image as ImageIcon
 } from "lucide-react";
 import { ApiError } from "@/lib/api";

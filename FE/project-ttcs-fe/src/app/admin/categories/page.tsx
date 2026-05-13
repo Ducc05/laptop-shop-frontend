@@ -6,12 +6,8 @@ import { Category } from "@/types/api";
 import { 
   Plus, 
   Search, 
-  Edit2, 
-  Trash2, 
   Tag, 
   X, 
-  Check, 
-  AlertCircle 
 } from "lucide-react";
 import { ApiError } from "@/lib/api";
 
@@ -112,29 +108,29 @@ export default function AdminCategoriesPage() {
             <div key={i} className="bg-white h-48 rounded-3xl border border-slate-100 animate-pulse" />
           ))
         ) : filteredCategories.map((c) => (
-          <div key={c.id} className="bg-white p-8 rounded-3xl border border-slate-200 hover:border-blue-200 hover:shadow-xl transition-all group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-[100px] -mr-8 -mt-8 group-hover:bg-blue-600 transition-colors duration-500" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white group-hover:text-blue-600 transition-colors">
-                <Tag className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-white transition-colors tracking-tighter uppercase">{c.name}</h3>
-              <p className="text-slate-400 text-sm font-medium line-clamp-2 group-hover:text-blue-100 transition-colors">{c.description || "Không có mô tả cho danh mục này."}</p>
-              
-              <div className="mt-8 pt-6 border-t border-slate-50 flex items-center gap-2 group-hover:border-white/10 transition-colors">
-                <button 
-                  onClick={() => { setEditingCategory(c); setIsModalOpen(true); }}
-                  className="px-4 py-2 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl text-xs font-black tracking-widest uppercase transition group-hover:bg-white/10 group-hover:text-white group-hover:hover:bg-white/20"
-                >
-                  Chỉnh sửa
-                </button>
-                <button 
-                  onClick={() => c.id && handleDelete(c.id)}
-                  className="px-4 py-2 text-slate-300 hover:text-red-500 rounded-xl text-xs font-black tracking-widest uppercase transition group-hover:text-blue-200 group-hover:hover:text-white"
-                >
-                  Xóa
-                </button>
-              </div>
+          <div key={c.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition">
+            <div className="w-11 h-11 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-5">
+              <Tag className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-lg font-black text-slate-900 mb-2 uppercase">{c.name}</h3>
+            <p className="text-slate-500 text-sm font-medium line-clamp-2 min-h-10">
+              {c.description || "Không có mô tả cho danh mục này."}
+            </p>
+
+            <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-3">
+              <button
+                onClick={() => { setEditingCategory(c); setIsModalOpen(true); }}
+                className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-black tracking-widest uppercase transition"
+              >
+                Chỉnh sửa
+              </button>
+              <button
+                onClick={() => c.id && handleDelete(c.id)}
+                className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-black tracking-widest uppercase transition"
+              >
+                Xóa
+              </button>
             </div>
           </div>
         ))}

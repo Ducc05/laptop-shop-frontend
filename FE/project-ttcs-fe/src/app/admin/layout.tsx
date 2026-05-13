@@ -10,6 +10,7 @@ import {
   ShoppingBag, 
   Users, 
   Tag, 
+  Award,
   Ticket,
   Building2,
   Settings,
@@ -23,6 +24,7 @@ const sidebarItems = [
   { name: "Đơn hàng", icon: <ShoppingBag className="w-5 h-5" />, href: "/admin/orders" },
   { name: "Người dùng", icon: <Users className="w-5 h-5" />, href: "/admin/users" },
   { name: "Danh mục", icon: <Tag className="w-5 h-5" />, href: "/admin/categories" },
+  { name: "Thương hiệu", icon: <Award className="w-5 h-5" />, href: "/admin/brands" },
   { name: "Voucher", icon: <Ticket className="w-5 h-5" />, href: "/admin/vouchers" },
   { name: "Chi nhánh", icon: <Building2 className="w-5 h-5" />, href: "/admin/branches" },
 ];
