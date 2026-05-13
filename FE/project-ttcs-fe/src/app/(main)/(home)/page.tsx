@@ -6,7 +6,6 @@ import { productApi } from "@/lib/api-endpoints";
 import type { Product } from "@/types/api";
 import { 
   Zap, 
-  TrendingUp, 
   ShoppingBag, 
   ArrowRight, 
   Star,
@@ -21,7 +20,6 @@ import { getPrimaryImage, getSpecValue } from "@/lib/format";
 export default function HomePage() {
   const { addToCart } = useCart();
   const [flashSaleProducts, setFlashSaleProducts] = useState<Product[]>([]);
-  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,8 +32,7 @@ export default function HomePage() {
         ]);
 
         const allProducts = prodRes.content || [];
-        setFlashSaleProducts(allProducts.slice(0, 4));
-        setTrendingProducts(allProducts.slice(4, 7));
+        setFlashSaleProducts(allProducts.slice(-4));
         setCategories(catRes || []);
       } catch (error) {
         console.error("Failed to fetch home data:", error);
@@ -189,45 +186,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* TRENDING BAR */}
-        <div className="mb-20">
-          <div className="flex items-center gap-3 mb-8">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Xu hướng tìm kiếm</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {trendingProducts.map((p) => (
-              <Link
-                key={p.id}
-                href={`/product/${p.id}`}
-                className="group bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-200 hover:shadow-xl transition-all duration-300 flex items-center gap-6"
-              >
-                <div className="w-24 h-24 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  <img 
-                    src={getPrimaryImage(p)} 
-                    alt={p.name} 
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="font-bold text-slate-900 truncate mb-1 group-hover:text-blue-600 transition-colors">{p.name}</p>
-                  <p className="text-blue-600 font-black text-lg">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(p.variants?.[0]?.price || 0)}
-                  </p>
-                  <div className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    In Stock
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
