@@ -73,6 +73,8 @@ export interface Branch {
 export interface Inventory {
   branchId?: number;
   branchName?: string;
+  address?: string;
+  phone?: string;
   quantity?: number;
 }
 

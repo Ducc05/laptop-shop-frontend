@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 import { useParams } from "next/navigation";
-import { productApi, reviewApi } from "@/lib/api-endpoints";
-import { Product, Review } from "@/types/api";
+import { branchApi, productApi, reviewApi } from "@/lib/api-endpoints";
+import type { Branch, Product, Review } from "@/types/api";
 import { 
   ShoppingCart, 
   Cpu, 
@@ -16,7 +16,9 @@ import {
   Clock,
   ChevronRight,
   Star,
-  MapPin
+  MapPin,
+  Phone,
+  Store
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
@@ -29,6 +31,7 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,11 +46,19 @@ export default function ProductDetailPage() {
     const fetchData = async () => {
       if (!id) return;
       try {
-        const prod = await productApi.getById(Number(id));
+        const [prod, productReviews, branchList] = await Promise.all([
+          productApi.getById(Number(id)),
+          reviewApi.getProductReviews(Number(id)),
+          branchApi.getAllPublic().catch((error) => {
+            console.error("Failed to fetch branches:", error);
+            return [];
+          }),
+        ]);
+
         setProduct(prod);
         setActiveImage(getPrimaryImage(prod));
-        const productReviews = await reviewApi.getProductReviews(Number(id));
         setReviews(productReviews);
+        setBranches(branchList || []);
 
         if (prod.categoryName) {
           const related = await productApi.getAll({ 
@@ -136,20 +147,34 @@ export default function ProductDetailPage() {
     { label: "VGA", val: getSpecValue(product, "vga"), icon: <Gamepad2 className="w-5 h-5 text-blue-600" /> },
   ].filter(i => i.val);
 
+  const branchById = new Map(
+    branches
+      .filter((branch) => branch.id !== undefined)
+      .map((branch) => [branch.id as number, branch])
+  );
+  const currentVariant = product.variants?.[0];
+
   const branchStocks = Object.values(
-    (product.variants || [])
-      .flatMap((variant) => variant.inventories || [])
-      .filter((inventory) => (inventory.quantity || 0) > 0)
-      .reduce<Record<string, { branchName: string; quantity: number }>>((result, inventory) => {
+    (currentVariant?.inventories || [])
+      .filter((inventory) => Number(inventory.quantity ?? 0) > 0)
+      .reduce<Record<string, { branchId?: number; branchName: string; address?: string; phone?: string; quantity: number }>>((result, inventory) => {
+        const branch = inventory.branchId ? branchById.get(inventory.branchId) : undefined;
         const key = String(inventory.branchId || inventory.branchName || "unknown");
+        const quantity = Number(inventory.quantity ?? 0);
         const current = result[key] || {
-          branchName: inventory.branchName || "Chi nhánh",
+          branchId: inventory.branchId,
+          branchName: branch?.name || inventory.branchName || "Chi nhánh",
+          address: branch?.address || inventory.address,
+          phone: branch?.phone || inventory.phone,
           quantity: 0,
         };
 
         result[key] = {
-          branchName: current.branchName,
-          quantity: current.quantity + (inventory.quantity || 0),
+          branchId: current.branchId,
+          branchName: branch?.name || current.branchName,
+          address: branch?.address || current.address || inventory.address,
+          phone: branch?.phone || current.phone || inventory.phone,
+          quantity: current.quantity + quantity,
         };
         return result;
       }, {})
@@ -240,7 +265,7 @@ export default function ProductDetailPage() {
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
                     currency: "VND",
-                  }).format(product.variants?.[0]?.price || 0)}
+                  }).format(currentVariant?.price || 0)}
                 </p>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full translate-x-12 translate-y-[-12px]" />
               </div>
@@ -250,16 +275,29 @@ export default function ProductDetailPage() {
                   Còn hàng tại chi nhánh
                 </p>
                 {branchStocks.length > 0 ? (
-                  <div className="flex flex-col items-start gap-2">
+                  <div className="space-y-3">
                     {branchStocks.map((stock) => (
-                      <span
-                        key={stock.branchName}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700"
+                      <div
+                        key={stock.branchId || stock.branchName}
+                        className="rounded-2xl border border-green-100 bg-green-50 p-4 text-sm"
                       >
-                        <MapPin className="w-3 h-3" />
-                        {stock.branchName}
-                        <span className="font-black">({stock.quantity})</span>
-                      </span>
+                        <p className="flex items-center gap-2 font-black text-green-700">
+                          <Store className="w-4 h-4 shrink-0" />
+                          {stock.branchName}
+                        </p>
+                        <p className="mt-2 flex items-center gap-2 text-slate-600">
+                          <Phone className="w-4 h-4 shrink-0 text-green-600" />
+                          <span>{stock.phone || "Chưa có số điện thoại"}</span>
+                        </p>
+                        {/* <p className="mt-2 flex items-center gap-2 text-slate-600">
+                          <Box className="w-4 h-4 shrink-0 text-green-600" />
+                          <span>Tồn kho: {stock.quantity} sản phẩm</span>
+                        </p> */}
+                        <p className="mt-2 flex items-start gap-2 text-slate-600">
+                          <MapPin className="w-4 h-4 shrink-0 text-green-600 mt-0.5" />
+                          <span>{stock.address || "Chưa có địa chỉ"}</span>
+                        </p>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -270,8 +308,8 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 gap-3 mb-8">
                 <button 
                   onClick={() => {
-                    if (product.variants && product.variants.length > 0 && product.variants[0].id) {
-                      addToCart(product.variants[0].id, 1);
+                    if (currentVariant?.id) {
+                      addToCart(currentVariant.id, 1);
                     } else {
                       alert("Sản phẩm chưa có biến thể");
                     }
