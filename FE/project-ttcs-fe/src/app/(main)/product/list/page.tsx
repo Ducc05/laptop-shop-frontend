@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { type Product, type ProductQueryParams } from "@/types/api";
 import { productApi } from "@/lib/api-endpoints";
@@ -16,17 +16,18 @@ import {
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { categoryApi, brandApi } from "@/lib/api-endpoints";
-import { Category, Brand } from "@/types/api";
+import type { Category, Brand } from "@/types/api";
 import { Pagination } from "@/app/components/common/Pagination";
+import { AutoRefresh } from "@/app/components/common/AutoRefresh";
 import { getPrimaryImage, getSpecValue } from "@/lib/format";
 import type { ApiError } from "@/lib/api";
+
+const PAGE_SIZE = 6;
 
 function ProductListContent() {
   const { addToCart } = useCart();
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  const PAGE_SIZE = 6;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -59,10 +60,8 @@ function ProductListContent() {
       ? "Min price must be <= max price."
       : null;
 
-  useEffect(() => {
-    let isMounted = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoading(true);
+  const fetchProducts = useCallback(async (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
 
     const params: ProductQueryParams = {
@@ -75,35 +74,29 @@ function ProductListContent() {
       size: PAGE_SIZE
     };
 
-    productApi.getAll(params)
-      .then((res) => {
-        if (!isMounted) return;
-        setProducts(res.content || []);
-        setTotalPages(res.totalPages || 0);
-        setTotalElements(res.totalElements || 0);
-        setNumberOfElements(res.content?.length || 0);
-      })
-      .catch((e: unknown) => {
-        if (!isMounted) return;
-        const apiError = e as ApiError;
+    try {
+      const res = await productApi.getAll(params);
+      setProducts(res.content || []);
+      setTotalPages(res.totalPages || 0);
+      setTotalElements(res.totalElements || 0);
+      setNumberOfElements(res.content?.length || 0);
+    } catch (e) {
+      const apiError = e as ApiError;
         setError(apiError?.message || "Không tải được danh sách sản phẩm");
-        setProducts([]);
-        setTotalPages(0);
-        setTotalElements(0);
-        setNumberOfElements(0);
-      })
-      .finally(() => {
-        if (!isMounted) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+      setProducts([]);
+      setTotalPages(0);
+      setTotalElements(0);
+      setNumberOfElements(0);
+    } finally {
+      setIsLoading(false);
+    }
   }, [q, brandId, categoryId, minPrice, maxPrice, currentPage]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchProducts(true);
+  }, [fetchProducts]);
+
+  useEffect(() => {
     setMinPriceInput(minPriceParam || "");
     setMaxPriceInput(maxPriceParam || "");
   }, [minPriceParam, maxPriceParam]);
@@ -174,7 +167,7 @@ function ProductListContent() {
     } else {
       params.delete(key);
     }
-    // Reset to page 1 (index 0) whenever filters change.
+    // Khi thay đổi filter, reset về trang 1
     params.delete("page");
     const query = params.toString();
     router.push(query ? `/product/list?${query}` : "/product/list");
@@ -200,6 +193,7 @@ function ProductListContent() {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
+      <AutoRefresh intervalMs={30000} onRefresh={fetchProducts} enabled={!isLoading} />
       <div className="max-w-[1200px] mx-auto px-6 py-10">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">

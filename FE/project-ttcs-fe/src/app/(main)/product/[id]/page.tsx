@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
+import { useCallback, useEffect, useState, type ComponentPropsWithoutRef } from "react";
 import { useParams } from "next/navigation";
 import { branchApi, productApi, reviewApi } from "@/lib/api-endpoints";
 import type { Branch, Product, Review } from "@/types/api";
@@ -25,6 +25,7 @@ import Link from "next/link";
 import { getPrimaryImage, getSpecValue } from "@/lib/format";
 import { resolveApiAssetUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { AutoRefresh } from "@/app/components/common/AutoRefresh";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -42,38 +43,40 @@ export default function ProductDetailPage() {
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      try {
-        const [prod, productReviews, branchList] = await Promise.all([
-          productApi.getById(Number(id)),
-          reviewApi.getProductReviews(Number(id)),
-          branchApi.getAllPublic().catch((error) => {
-            console.error("Failed to fetch branches:", error);
-            return [];
-          }),
-        ]);
+  const fetchProductDetail = useCallback(async () => {
+    if (!id) return;
 
-        setProduct(prod);
-        setActiveImage(getPrimaryImage(prod));
-        setReviews(productReviews);
-        setBranches(branchList || []);
+    try {
+      const [prod, productReviews, branchList] = await Promise.all([
+        productApi.getById(Number(id)),
+        reviewApi.getProductReviews(Number(id)),
+        branchApi.getAllPublic().catch((error) => {
+          console.error("Lỗi kết nối với API chi nhánh:", error);
+          return [];
+        }),
+      ]);
 
-        if (prod.categoryName) {
-          const related = await productApi.getAll({ 
-            size: 5 
-          });
-          setRelatedProducts(related.content?.filter(p => p.id !== prod.id) || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch product details:", error);
-      } finally {
-        setIsLoading(false);
+      setProduct(prod);
+      setActiveImage(getPrimaryImage(prod));
+      setReviews(productReviews);
+      setBranches(branchList || []);
+
+      if (prod.categoryName) {
+        const related = await productApi.getAll({
+          size: 5,
+        });
+        setRelatedProducts(related.content?.filter((p) => p.id !== prod.id) || []);
       }
-    };
-    fetchData();
+    } catch (error) {
+      console.error("Lỗi khi tải chi tiết sản phẩm:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    void fetchProductDetail();
+  }, [fetchProductDetail]);
 
   const averageRating =
     reviews.length > 0
@@ -182,6 +185,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
+      <AutoRefresh intervalMs={3000} onRefresh={fetchProductDetail} enabled={!isLoading} />
       <div className="max-w-[1200px] mx-auto px-6 py-8">
         {/* BREADCRUMBS */}
         <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8 whitespace-nowrap overflow-x-auto pb-2 scrollbar-hide">

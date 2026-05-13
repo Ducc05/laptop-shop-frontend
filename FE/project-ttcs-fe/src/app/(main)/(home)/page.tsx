@@ -1,22 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, Fragment } from "react";
+import { useEffect, useState } from "react";
 import { productApi } from "@/lib/api-endpoints";
-import { Product } from "@/types/api";
+import type { Product } from "@/types/api";
 import { 
   Zap, 
   TrendingUp, 
   ShoppingBag, 
   ArrowRight, 
   Star,
-  Briefcase,
   Layers
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { CountdownTimer } from "@/app/components/common/CountdownTimer";
 import { categoryApi } from "@/lib/api-endpoints";
-import { Category } from "@/types/api";
+import type { Category } from "@/types/api";
 import { getPrimaryImage, getSpecValue } from "@/lib/format";
 
 export default function HomePage() {
@@ -33,7 +32,7 @@ export default function HomePage() {
           productApi.getAll({ size: 8 }),
           categoryApi.getAllPublic()
         ]);
-        
+
         const allProducts = prodRes.content || [];
         setFlashSaleProducts(allProducts.slice(0, 4));
         setTrendingProducts(allProducts.slice(4, 7));
@@ -46,8 +45,6 @@ export default function HomePage() {
     };
     fetchHomeData();
   }, []);
-
-
 
   return (
     <div className="bg-slate-50 min-h-screen font-sans pb-20">
