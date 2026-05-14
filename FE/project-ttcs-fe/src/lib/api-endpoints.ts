@@ -208,10 +208,11 @@ export const orderApi = {
       undefined,
       { auth: true }
     ),
-  getDashboardStats: () =>
-    apiClient.GET<DashboardStats>("/api/v1/admin/orders/dashboard/stats", {
-      auth: true,
-    }),
+  getDashboardStats: (month?: string) =>
+    apiClient.GET<DashboardStats>(
+      `/api/v1/admin/orders/dashboard/stats${toQueryString({ month })}`,
+      { auth: true }
+    ),
 };
 
 export const managerDashboardApi = {

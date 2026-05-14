@@ -349,6 +349,43 @@ export interface DashboardStats {
   totalRevenue?: number;
   successfulOrders?: number;
   revenueByStatus?: Record<string, number>;
+  monthlyRevenue?: number;
+  monthlyOrders?: number;
+  revenueByDayThisMonth?: DashboardRevenuePoint[];
+  revenueByBranchThisMonth?: DashboardBranchRevenue[];
+  topProductsThisMonth?: DashboardTopProduct[];
+  topCustomersThisMonth?: DashboardTopCustomer[];
+}
+
+export interface DashboardRevenuePoint {
+  date?: string;
+  revenue?: number;
+  orders?: number;
+}
+
+export interface DashboardBranchRevenue {
+  branchId?: number;
+  branchName?: string;
+  revenue?: number;
+  orders?: number;
+}
+
+export interface DashboardTopProduct {
+  productId?: number;
+  productName?: string;
+  variantId?: number;
+  sku?: string;
+  quantitySold?: number;
+  revenue?: number;
+}
+
+export interface DashboardTopCustomer {
+  userId?: number;
+  username?: string;
+  fullName?: string;
+  email?: string;
+  orderCount?: number;
+  totalSpent?: number;
 }
 
 export interface LowStock {

@@ -4,15 +4,33 @@ import React, { useEffect, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
+  BarChart3,
   Package,
   ShoppingBag,
   ShieldCheck,
   TrendingUp,
+  Trophy,
+  UserRound,
   Users,
 } from "lucide-react";
 import { orderApi, productApi, userApi } from "@/lib/api-endpoints";
 import { formatCurrency, getOrderStatusLabel } from "@/lib/format";
 import type { DashboardStats, Order, User } from "@/types/api";
+
+const getCurrentMonthValue = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const formatMonthLabel = (value: string) => {
+  const [year, month] = value.split("-").map(Number);
+  if (!year || !month) return "tháng hiện tại";
+
+  return new Date(year, month - 1, 1).toLocaleDateString("vi-VN", {
+    month: "long",
+    year: "numeric",
+  });
+};
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -26,6 +44,7 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [recentUsers, setRecentUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -34,7 +53,7 @@ export default function AdminDashboard() {
       try {
         const [statsResponse, ordersResponse, productsResponse, usersResponse] =
           await Promise.all([
-            orderApi.getDashboardStats(),
+            orderApi.getDashboardStats(selectedMonth),
             orderApi.getAllAdmin({ size: 5, page: 0 }),
             productApi.getAllAdmin({ size: 1, page: 0 }),
             userApi.getAll({ size: 5, page: 0 }),
@@ -53,7 +72,9 @@ export default function AdminDashboard() {
     };
 
     void fetchDashboardData();
-  }, []);
+  }, [selectedMonth]);
+
+  const selectedMonthLabel = formatMonthLabel(selectedMonth);
 
   const statCards = [
     {
@@ -72,11 +93,15 @@ export default function AdminDashboard() {
       icon: <Users className="w-6 h-6 text-amber-600" />,
     },
     {
-      name: "Doanh thu",
-      val: formatCurrency(stats.totalRevenue),
+      name: `Doanh thu ${selectedMonthLabel}`,
+      val: formatCurrency(stats.monthlyRevenue || 0),
       icon: <TrendingUp className="w-6 h-6 text-indigo-600" />,
     },
   ];
+  const branchRevenue = stats.revenueByBranchThisMonth || [];
+  const topProducts = stats.topProductsThisMonth || [];
+  const topCustomers = stats.topCustomersThisMonth || [];
+  const maxBranchRevenue = Math.max(...branchRevenue.map((branch) => branch.revenue || 0), 1);
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
@@ -115,6 +140,165 @@ export default function AdminDashboard() {
             </h3>
           </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        <div className="xl:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+          <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 tracking-tighter flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+                Doanh thu theo chi nhánh
+              </h3>
+              <p className="text-sm text-slate-400 font-bold mt-1">
+                {stats.monthlyOrders || 0} đơn hoàn tất trong {selectedMonthLabel}
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="sr-only" htmlFor="dashboard-month">
+                Chọn tháng thống kê
+              </label>
+              <input
+                id="dashboard-month"
+                type="month"
+                value={selectedMonth}
+                max={getCurrentMonthValue()}
+                onChange={(event) => setSelectedMonth(event.target.value || getCurrentMonthValue())}
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+              />
+              <div className="rounded-2xl bg-blue-50 px-4 py-3 text-right">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Tổng doanh thu
+                </p>
+                <p className="text-xl font-black text-blue-600 tracking-tighter">
+                  {formatCurrency(stats.monthlyRevenue || 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {branchRevenue.length === 0 ? (
+            <div className="py-14 text-center rounded-3xl border-2 border-dashed border-slate-100">
+              <BarChart3 className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+              <p className="text-slate-400 font-bold">
+                Chưa có doanh thu theo chi nhánh trong {selectedMonthLabel}.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto pb-2">
+              <div
+                className="grid min-w-max items-end gap-3 border-b border-slate-100 pb-3"
+                style={{ gridTemplateColumns: `repeat(${branchRevenue.length}, minmax(92px, 1fr))` }}
+              >
+                {branchRevenue.map((branch) => {
+                  const percent = Math.max(10, ((branch.revenue || 0) / maxBranchRevenue) * 100);
+
+                  return (
+                    <div key={branch.branchId || branch.branchName} className="flex w-[92px] flex-col justify-end gap-2">
+                      <div className="text-center">
+                        <p className="text-[11px] font-black leading-4 text-slate-900">
+                          {formatCurrency(branch.revenue || 0)}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400">{branch.orders || 0} đơn</p>
+                      </div>
+                      <div className="flex h-[150px] items-end rounded-xl bg-slate-50 px-2 pt-2">
+                        <div
+                          className="w-full rounded-t-xl bg-blue-600 shadow-lg shadow-blue-100 transition-all"
+                          style={{ height: `${percent}%`, minHeight: 18 }}
+                        />
+                      </div>
+                      <p className="min-h-[32px] text-center text-[11px] font-black leading-4 text-slate-600 line-clamp-2">
+                        {branch.branchName || `Chi nhánh #${branch.branchId}`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="xl:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+          <h3 className="text-lg font-black text-slate-900 tracking-tighter mb-6 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-amber-500" />
+            Sản phẩm bán chạy trong {selectedMonthLabel}
+          </h3>
+          <div className="space-y-4">
+            {topProducts.length === 0 ? (
+              <p className="text-sm text-slate-400 font-bold">
+                Chưa có sản phẩm nào được mua trong {selectedMonthLabel}.
+              </p>
+            ) : (
+              topProducts.map((product, index) => (
+                <div key={`${product.productId}-${product.variantId}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-xs font-black text-amber-600 shadow-sm">
+                    #{index + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-slate-900 truncate">{product.productName}</p>
+                    <p className="text-xs text-slate-400 font-bold truncate">SKU: {product.sku || "---"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-blue-600">{product.quantitySold || 0}</p>
+                    <p className="text-[10px] text-slate-400 font-bold">đã bán</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+        <div className="flex flex-col justify-between gap-4 mb-6 md:flex-row md:items-center">
+          <h3 className="text-lg font-black text-slate-900 tracking-tighter flex items-center gap-2">
+            <UserRound className="w-5 h-5 text-emerald-600" />
+            Người dùng chi tiêu nhiều nhất trong {selectedMonthLabel}
+          </h3>
+          <label className="sr-only" htmlFor="top-customers-month">
+            Chọn tháng thống kê khách hàng
+          </label>
+          <input
+            id="top-customers-month"
+            type="month"
+            value={selectedMonth}
+            max={getCurrentMonthValue()}
+            onChange={(event) => setSelectedMonth(event.target.value || getCurrentMonthValue())}
+            className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50"
+          />
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            Khách hàng nổi bật
+          </span>
+        </div>
+
+        {topCustomers.length === 0 ? (
+          <div className="py-12 text-center rounded-3xl border-2 border-dashed border-slate-100">
+            <Users className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+            <p className="text-slate-400 font-bold">
+              Chưa có dữ liệu chi tiêu trong {selectedMonthLabel}.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            {topCustomers.map((customer, index) => (
+              <div key={customer.userId} className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-sm font-black text-emerald-600 shadow-sm">
+                    #{index + 1}
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400">{customer.orderCount || 0} đơn</span>
+                </div>
+                <p className="text-sm font-black text-slate-900 truncate">
+                  {customer.fullName || customer.username || `User #${customer.userId}`}
+                </p>
+                <p className="text-xs text-slate-400 truncate mt-1">{customer.email}</p>
+                <p className="text-lg font-black text-blue-600 tracking-tighter mt-4">
+                  {formatCurrency(customer.totalSpent || 0)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
@@ -176,7 +360,7 @@ export default function AdminDashboard() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl" />
             <h3 className="text-lg font-black tracking-tighter mb-8 flex items-center gap-3">
               <ShieldCheck className="w-6 h-6 text-blue-500" />
-              Thống kê doanh thu
+              Thống kê doanh thu {selectedMonthLabel}
             </h3>
             <div className="space-y-4 relative z-10">
               {Object.entries(stats.revenueByStatus || {}).length > 0 ? (
@@ -202,7 +386,7 @@ export default function AdminDashboard() {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Đơn thành công
                 </p>
-                <p className="text-xs font-bold">{stats.successfulOrders || 0} đơn</p>
+                <p className="text-xs font-bold">{stats.monthlyOrders || 0} đơn</p>
               </div>
             </div>
           </div>
