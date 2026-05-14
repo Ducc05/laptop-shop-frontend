@@ -89,6 +89,8 @@ export const aiApi = {
 export const productApi = {
   getAll: (params?: ProductQueryParams) =>
     apiClient.GET<PageProduct>(`/api/v1/public/products${toQueryString(params)}`),
+  getBestSelling: (limit = 4) =>
+    apiClient.GET<Product[]>(`/api/v1/public/products/best-selling?limit=${limit}`),
   getById: (id: number) =>
     apiClient.GET<Product>(`/api/v1/public/products/${id}`),
   getSuggestions: (q: string) =>
