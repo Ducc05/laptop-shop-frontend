@@ -1,39 +1,118 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ChevronDown,
+  LayoutGrid,
+  LogOut,
+  Search,
+  ShieldAlert,
+  ShoppingCart,
+  Ticket,
+  User,
+} from "lucide-react";
+import { brandApi, categoryApi } from "@/lib/api-endpoints";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { brandApi } from "@/lib/api-endpoints";
-import type { Brand } from "@/types/api";
-import { 
-  ShoppingCart, 
-  Search, 
-  User, 
-  LogOut, 
-  LayoutGrid, 
-  ChevronDown,
-  ShieldAlert,
-  Ticket
-} from "lucide-react";
+import type { Brand, Category } from "@/types/api";
 import { MiniCart } from "./MiniCart";
-import { useRouter } from "next/navigation";
+
+type CatalogItem = {
+  id?: number;
+  name?: string;
+};
+
+const styles = {
+  header: "sticky top-0 z-[60] flex h-[72px] w-full items-center gap-4 bg-red-600 px-10 text-white shadow-md",
+  logo: "text-[22px] font-bold tracking-tighter",
+  navButton: "flex h-10 items-center gap-2 rounded-lg bg-white/20 px-3 text-sm font-medium hover:bg-white/30",
+  dropdown: "absolute left-0 top-full mt-2 w-64 rounded-xl border bg-white p-2 text-slate-700 shadow-xl",
+  dropdownLink: "block rounded-lg px-3 py-2 text-sm hover:bg-slate-50 hover:text-red-600",
+  search: "flex h-10 flex-1 items-center rounded-full bg-white px-4 text-black shadow-sm",
+  actionButton: "relative flex h-10 items-center gap-2 rounded-lg bg-white/10 px-4 text-sm hover:bg-white/20",
+  userMenu: "absolute right-0 top-full mt-2 w-52 rounded-xl border bg-white p-2 text-slate-700 shadow-xl",
+};
+
+function CatalogDropdown({
+  title,
+  allLabel,
+  emptyLabel,
+  items,
+  filterKey,
+  isOpen,
+  onToggle,
+  onClose,
+}: {
+  title: string;
+  allLabel: string;
+  emptyLabel: string;
+  items: CatalogItem[];
+  filterKey: "brandId" | "categoryId";
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="relative">
+      <button type="button" onClick={onToggle} className={styles.navButton}>
+        <LayoutGrid size={16} />
+        <span>{title}</span>
+        <ChevronDown size={14} className={isOpen ? "rotate-180" : ""} />
+      </button>
+
+      {isOpen && (
+        <div className={styles.dropdown}>
+          <Link href="/product/list" onClick={onClose} className={`${styles.dropdownLink} font-bold`}>
+            {allLabel}
+          </Link>
+          <div className="my-1 h-px bg-slate-100" />
+
+          {items.length ? (
+            items.map((item) => (
+              <Link
+                key={`${filterKey}-${item.id}`}
+                href={`/product/list?${filterKey}=${item.id}`}
+                onClick={onClose}
+                className={styles.dropdownLink}
+              >
+                {item.name}
+              </Link>
+            ))
+          ) : (
+            <p className="px-3 py-2 text-sm text-slate-400">{emptyLabel}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Header = () => {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
   const router = useRouter();
+
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [openCatalogMenu, setOpenCatalogMenu] = useState<"category" | "brand" | null>(null);
+
+  const catalogMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchHeaderData = async () => {
       try {
-        const brandList = await brandApi.getAllPublic();
+        const [brandList, categoryList] = await Promise.all([
+          brandApi.getAllPublic(),
+          categoryApi.getAllPublic(),
+        ]);
+
         setBrands(brandList || []);
+        setCategories(categoryList || []);
       } catch (error) {
         console.error("Failed to fetch header data:", error);
       }
@@ -42,159 +121,153 @@ export const Header = () => {
     void fetchHeaderData();
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/product/list?q=${encodeURIComponent(searchQuery.trim())}`);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!catalogMenuRef.current?.contains(event.target as Node)) {
+        setOpenCatalogMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const keyword = searchQuery.trim();
+
+    if (keyword) {
+      router.push(`/product/list?q=${encodeURIComponent(keyword)}`);
     }
   };
 
+  const closeCatalogMenu = () => setOpenCatalogMenu(null);
+  const closeUserMenu = () => setIsUserMenuOpen(false);
+
   return (
     <>
-      <header className="w-full h-[72px] px-[40px] flex items-center gap-[16px] 
-      bg-gradient-to-r from-[#d70018] to-[#ff3b3b] text-white sticky top-0 z-[60] shadow-md">
-
-        {/* LOGO */}
-        <Link href="/" className="text-[22px] font-bold flex items-center gap-[4px]">
-          <span className="tracking-tighter">VPH STORE</span>
+      <header className={styles.header}>
+        <Link href="/" className={styles.logo}>
+          VPH STORE
         </Link>
 
-        {/* THƯƠNG HIỆU */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsBrandMenuOpen((open) => !open)}
-            className="flex items-center gap-[6px] bg-white/20 hover:bg-white/30 transition px-[12px] h-[38px] rounded-[8px] text-[14px] font-medium group"
-          >
-            <LayoutGrid size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-            <span>Thương hiệu</span>
-            <ChevronDown size={14} className={`transition-transform ${isBrandMenuOpen ? "rotate-180" : ""}`} />
-          </button>
+        <div ref={catalogMenuRef} className="flex items-center gap-2">
+          <CatalogDropdown
+            title="Danh mục"
+            allLabel="Tất cả danh mục"
+            emptyLabel="Chưa có danh mục"
+            filterKey="categoryId"
+            items={categories}
+            isOpen={openCatalogMenu === "category"}
+            onToggle={() => setOpenCatalogMenu(openCatalogMenu === "category" ? null : "category")}
+            onClose={closeCatalogMenu}
+          />
 
-          {isBrandMenuOpen && (
-            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-white p-2 text-slate-700 shadow-xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-              <Link
-                href="/product/list"
-                onClick={() => setIsBrandMenuOpen(false)}
-                className="block rounded-lg px-3 py-2 text-sm font-bold hover:bg-red-50 hover:text-red-600"
-              >
-                Tất cả thương hiệu
-              </Link>
-              <div className="my-1 h-px bg-slate-100" />
-              {brands.length > 0 ? (
-                brands.map((brand) => (
-                  <Link
-                    key={brand.id}
-                    href={`/product/list?brandId=${brand.id}`}
-                    onClick={() => setIsBrandMenuOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50 hover:text-red-600"
-                  >
-                    {brand.name || `Thương hiệu #${brand.id}`}
-                  </Link>
-                ))
-              ) : (
-                <p className="px-3 py-2 text-sm text-slate-400">Chưa có thương hiệu</p>
-              )}
-            </div>
-          )}
+          <CatalogDropdown
+            title="Thương hiệu"
+            allLabel="Tất cả thương hiệu"
+            emptyLabel="Chưa có thương hiệu"
+            filterKey="brandId"
+            items={brands}
+            isOpen={openCatalogMenu === "brand"}
+            onToggle={() => setOpenCatalogMenu(openCatalogMenu === "brand" ? null : "brand")}
+            onClose={closeCatalogMenu}
+          />
         </div>
-        {/* SEARCH */}
-        <form 
-          onSubmit={handleSearch}
-          className="flex-1 flex items-center bg-white rounded-full h-[40px] px-[16px] shadow-sm group"
-        >
-          <button type="submit" className="hover:scale-110 transition active:scale-95">
-            <Search size={18} className="text-gray-400 group-focus-within:text-blue-500 transition" />
+
+        <form onSubmit={handleSearch} className={styles.search}>
+          <button type="submit" className="text-gray-400 hover:text-blue-500">
+            <Search size={18} />
           </button>
           <input
-            type="text"
-            placeholder="Bạn muốn mua gì hôm nay?"
-            className="flex-1 ml-[8px] outline-none text-[14px] text-black placeholder:text-gray-400"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Bạn muốn mua gì hôm nay?"
+            className="ml-2 flex-1 text-sm outline-none placeholder:text-gray-400"
           />
         </form>
 
-        {/* CART */}
-        <button 
-          onClick={() => setIsMiniCartOpen(true)}
-          className="relative flex items-center gap-[6px] text-[14px] bg-white/10 hover:bg-white/20 h-[38px] px-4 rounded-lg transition"
-        >
+        <button onClick={() => setIsMiniCartOpen(true)} className={styles.actionButton}>
           <ShoppingCart size={20} />
-          <span className="font-medium">Giỏ hàng</span>
-
-          {/* badge */}
+          <span>Giỏ hàng</span>
           {totalItems > 0 && (
-            <span className="absolute top-[-6px] right-[-4px] bg-yellow-400 
-            text-black text-[10px] px-[5px] py-[1px] rounded-full font-bold border-2 border-[#d70018]">
+            <span className="absolute -right-1 -top-2 rounded-full bg-yellow-400 px-1.5 text-xs font-bold text-black">
               {totalItems}
             </span>
           )}
         </button>
 
-        {/* USER */}
         <div className="relative">
           {user ? (
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-[6px] bg-white/10 hover:bg-white/20 px-[12px] py-[8px] rounded-[8px] text-[14px] transition"
-              >
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                  <User size={14} />
-                </div>
-                <span className="font-medium max-w-[100px] truncate">
-                  {user.fullName || user.username || "User"}
-                </span>
-                <ChevronDown size={14} className={`transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+            <>
+              <button onClick={() => setIsUserMenuOpen((open) => !open)} className={styles.actionButton}>
+                <User size={18} />
+                <span className="max-w-28 truncate">{user.fullName || user.username || "User"}</span>
+                <ChevronDown size={14} className={isUserMenuOpen ? "rotate-180" : ""} />
               </button>
 
-              {/* User Dropdown */}
               {isUserMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border p-2 text-slate-700 animate-in fade-in zoom-in-95 duration-200">
-                  <Link href="/user/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg transition text-sm">
-                    <User size={16} />
+                <div className={styles.userMenu}>
+                  <Link href="/user/profile" onClick={closeUserMenu} className={styles.dropdownLink}>
                     Trang cá nhân
                   </Link>
-                  <Link href="/user/orders" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg transition text-sm">
-                    <LayoutGrid size={16} />
+                  <Link href="/user/orders" onClick={closeUserMenu} className={styles.dropdownLink}>
                     Đơn hàng của tôi
                   </Link>
-                  <Link href="/user/vouchers" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg transition text-sm">
-                    <Ticket size={16} />
-                    Voucher của tôi
+                  <Link href="/user/vouchers" onClick={closeUserMenu} className={styles.dropdownLink}>
+                    <span className="inline-flex items-center gap-2">
+                      <Ticket size={16} />
+                      Voucher của tôi
+                    </span>
                   </Link>
+
                   {(user.role === "ADMIN" || user.role === "MANAGER") && (
-                    <Link href={user.role === "ADMIN" ? "/admin" : "/manager"} onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition text-sm font-bold">
-                       <ShieldAlert size={16} />
-                       {user.role === "ADMIN" ? "Quản trị hệ thống" : "Quản lý chi nhánh"}
+                    <Link
+                      href={user.role === "ADMIN" ? "/admin" : "/manager"}
+                      onClick={closeUserMenu}
+                      className={`${styles.dropdownLink} font-bold text-blue-600 hover:bg-blue-50`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <ShieldAlert size={16} />
+                        {user.role === "ADMIN" ? "Quản trị hệ thống" : "Quản lý chi nhánh"}
+                      </span>
                     </Link>
                   )}
-                  <button onClick={() => { logout(); setIsUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-red-50 text-red-600 rounded-lg transition text-sm text-left">
-                    <LogOut size={16} />
-                    Đăng xuất
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      closeUserMenu();
+                    }}
+                    className={`${styles.dropdownLink} w-full text-left text-red-600 hover:bg-red-50`}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogOut size={16} />
+                      Đăng xuất
+                    </span>
                   </button>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-[2px] bg-white/20 px-[12px] py-[8px] rounded-[8px] text-[14px]">
+            <div className="flex h-10 items-center gap-2 rounded-lg bg-white/20 px-3 text-sm">
               <User size={16} />
-              <Link href="/user/login" className="hover:underline font-medium">Đăng nhập</Link>
-              <span className="opacity-50 mx-1">/</span>
-              <Link href="/user/register" className="hover:underline font-medium">Đăng ký</Link>
+              <Link href="/user/login" className="hover:underline">
+                Đăng nhập
+              </Link>
+              <span className="opacity-60">/</span>
+              <Link href="/user/register" className="hover:underline">
+                Đăng ký
+              </Link>
             </div>
           )}
         </div>
       </header>
 
-      {/* Mini Cart Slide-over Background Overlay */}
       {isMiniCartOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] animate-in fade-in duration-300"
-          onClick={() => setIsMiniCartOpen(false)}
-        />
+        <div className="fixed inset-0 z-[90] bg-black/40" onClick={() => setIsMiniCartOpen(false)} />
       )}
+
       <MiniCart isOpen={isMiniCartOpen} onClose={() => setIsMiniCartOpen(false)} />
     </>
   );
