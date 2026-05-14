@@ -188,10 +188,14 @@ export const orderApi = {
     apiClient.GET<PageOrder>(`/api/v1/admin/orders${toQueryString(params)}`, {
       auth: true,
     }),
+  getAdminById: (id: number) =>
+    apiClient.GET<Order>(`/api/v1/admin/orders/${id}`, { auth: true }),
   getAllManager: (params?: OrderQueryParams) =>
     apiClient.GET<PageOrder>(`/api/v1/manager/orders${toQueryString(params)}`, {
       auth: true,
     }),
+  getManagerById: (id: number) =>
+    apiClient.GET<Order>(`/api/v1/manager/orders/${id}`, { auth: true }),
   updateStatus: (id: number, status: string) =>
     apiClient.PUT(
       `/api/v1/admin/orders/${id}/status?status=${encodeURIComponent(status)}`,

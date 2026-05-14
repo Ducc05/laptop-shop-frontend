@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   ChevronLeft,
@@ -204,18 +205,28 @@ export default function AdminOrdersPage() {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <select
-                        value={order.status || "PENDING"}
-                        onChange={(event) => order.id && handleUpdateStatus(order.id, event.target.value as OrderStatus)}
-                        disabled={!order.id || busyOrderId === order.id}
-                        className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium disabled:opacity-60"
-                      >
-                        {ORDER_STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {getOrderStatusLabel(status)}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-3">
+                        <select
+                          value={order.status || "PENDING"}
+                          onChange={(event) => order.id && handleUpdateStatus(order.id, event.target.value as OrderStatus)}
+                          disabled={!order.id || busyOrderId === order.id}
+                          className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium disabled:opacity-60"
+                        >
+                          {ORDER_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {getOrderStatusLabel(status)}
+                            </option>
+                          ))}
+                        </select>
+                        {order.id ? (
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="rounded-xl bg-blue-50 px-3 py-2 text-sm font-black text-blue-600 hover:bg-blue-600 hover:text-white"
+                          >
+                            Chi tiết
+                          </Link>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))
