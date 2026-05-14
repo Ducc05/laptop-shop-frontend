@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { productApi, categoryApi, brandApi, branchApi, fileApi } from "@/lib/api-endpoints";
 import { Product, Category, Brand, Branch, Inventory } from "@/types/api";
-import { getPrimaryImage, getSpecValue } from "@/lib/format";
+import { getPrimaryImage } from "@/lib/format";
 import { normalizeAssetUrl, resolveApiAssetUrl } from "@/lib/api";
 import { 
   Plus, 
@@ -23,10 +23,52 @@ import {
 import { ApiError } from "@/lib/api";
 
 type StockMode = "all" | "custom";
+type SpecRow = {
+  id: string;
+  key: string;
+  value: string;
+};
+
+const SPEC_KEY_OPTIONS = ["color", "cpu", "ram", "storage", "vga", "screen", "os", "battery", "weight"];
 
 const safeInputValue = (value: unknown): string => {
   if (value === undefined || value === null) return "";
   return String(value);
+};
+
+const createSpecRow = (key = "", value = ""): SpecRow => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  key,
+  value,
+});
+
+const specsToRows = (specs?: Record<string, unknown> | null, fallbackColor?: unknown): SpecRow[] => {
+  const entries = specs ? Object.entries(specs) : [];
+  const rows = entries
+    .filter(([key, value]) => key.trim() && value !== undefined && value !== null && safeInputValue(value).trim())
+    .map(([key, value]) => createSpecRow(key, safeInputValue(value)));
+
+  const hasColorSpec = entries.some(([key]) => key.trim().toLowerCase() === "color");
+  const colorValue = safeInputValue(fallbackColor).trim();
+
+  if (!hasColorSpec && colorValue) {
+    rows.unshift(createSpecRow("color", colorValue));
+  }
+
+  return rows;
+};
+
+const rowsToSpecsJson = (rows: SpecRow[]): Record<string, string> => {
+  return rows.reduce<Record<string, string>>((result, row) => {
+    const key = row.key.trim();
+    const value = row.value.trim();
+
+    if (key && value) {
+      result[key] = value;
+    }
+
+    return result;
+  }, {});
 };
 
 export default function AdminProductsPage() {
@@ -49,6 +91,7 @@ export default function AdminProductsPage() {
   const [stockMode, setStockMode] = useState<StockMode>("all");
   const [allBranchStock, setAllBranchStock] = useState("0");
   const [branchStocks, setBranchStocks] = useState<Record<number, string>>({});
+  const [specRows, setSpecRows] = useState<SpecRow[]>([]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -110,6 +153,7 @@ export default function AdminProductsPage() {
     setStockMode("all");
     setAllBranchStock("0");
     setBranchStocks({});
+    setSpecRows([]);
     setIsModalOpen(true);
   };
   
@@ -132,6 +176,7 @@ export default function AdminProductsPage() {
     setStockMode(allBranchesHaveSameStock ? "all" : "custom");
     setAllBranchStock(safeInputValue(getAllBranchStockDefault(product)));
     setBranchStocks(nextBranchStocks);
+    setSpecRows(specsToRows(product.variants?.[0]?.specsJson, product.variants?.[0]?.color));
     setIsModalOpen(true);
   };
 
@@ -200,6 +245,20 @@ export default function AdminProductsPage() {
       .filter((inventory) => inventory.branchId && Number.isFinite(inventory.quantity) && inventory.quantity >= 0);
   };
 
+  const addSpecRow = () => {
+    setSpecRows((current) => [...current, createSpecRow()]);
+  };
+
+  const updateSpecRow = (id: string, field: "key" | "value", value: string) => {
+    setSpecRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
+  };
+
+  const removeSpecRow = (id: string) => {
+    setSpecRows((current) => current.filter((row) => row.id !== id));
+  };
+
   function getAllBranchStockDefault(product: Product | null = editingProduct): number {
     const inventories = product?.variants?.[0]?.inventories || [];
     if (inventories.length > 0) {
@@ -233,21 +292,15 @@ export default function AdminProductsPage() {
       return;
     }
 
+    const specsJson = rowsToSpecsJson(specRows);
     const variant = {
       ...(currentVariant || {}),
       sku: sku || currentVariant?.sku || `SP-${Date.now()}`,
       price: Number(formData.get("price")),
-      color: formData.get("color") as string,
+      color: safeInputValue(specsJson.color),
       quantity: inventories.reduce((sum, inventory) => sum + (inventory.quantity || 0), 0),
       inventories,
-      specsJson: {
-        ...(currentVariant?.specsJson || {}),
-        cpu: formData.get("cpu") as string,
-        ram: formData.get("ram") as string,
-        storage: formData.get("storage") as string,
-        vga: formData.get("vga") as string,
-        screen: formData.get("screen") as string,
-      },
+      specsJson,
       images: imageUrl ? [{ imageUrl: normalizeAssetUrl(imageUrl) }] : currentVariant?.images ?? [],
     };
     const productData: Product = {
@@ -495,11 +548,6 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 ml-1">Màu sắc</label>
-                    <input name="color" defaultValue={safeInputValue(editingProduct?.variants?.[0]?.color)} placeholder="VD: Đen" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
-                  </div>
-
                   <div className="space-y-4">
                     <div className="flex items-center justify-between gap-3">
                       <label className="text-sm font-bold text-slate-700 ml-1">Tồn kho theo chi nhánh</label>
@@ -654,33 +702,67 @@ export default function AdminProductsPage() {
 
                 {/* Thông số & Mô tả */}
                 <div className="space-y-6">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-l-4 border-blue-600 pl-4 mb-4">Thông số kỹ thuật</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 ml-1">CPU</label>
-                      <input name="cpu" defaultValue={safeInputValue(getSpecValue(editingProduct, "cpu"))} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 ml-1">RAM</label>
-                      <input name="ram" defaultValue={safeInputValue(getSpecValue(editingProduct, "ram"))} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
-                    </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-l-4 border-blue-600 pl-4">Thông số kỹ thuật</h3>
+                    <button
+                      type="button"
+                      onClick={addSpecRow}
+                      className="w-11 h-11 shrink-0 rounded-2xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                      aria-label="Thêm thông số kỹ thuật"
+                      title="Thêm thông số kỹ thuật"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 ml-1">Ổ cứng</label>
-                      <input name="storage" defaultValue={safeInputValue(getSpecValue(editingProduct, "storage"))} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 ml-1">Card màn hình</label>
-                      <input name="vga" defaultValue={safeInputValue(getSpecValue(editingProduct, "vga"))} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 ml-1">Màn hình</label>
-                    <input name="screen" defaultValue={safeInputValue(getSpecValue(editingProduct, "screen"))} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition" />
+                  <datalist id="spec-key-options">
+                    {SPEC_KEY_OPTIONS.map((option) => (
+                      <option key={option} value={option} />
+                    ))}
+                  </datalist>
+                  <div className="space-y-3">
+                    {specRows.length === 0 ? (
+                      <div className="border-2 border-dashed border-slate-200 rounded-3xl px-5 py-8 text-center">
+                        <p className="text-sm font-bold text-slate-400">
+                          Bấm dấu cộng để thêm thông số kỹ thuật cho sản phẩm.
+                        </p>
+                      </div>
+                    ) : (
+                      specRows.map((row, index) => (
+                        <div key={row.id} className="grid grid-cols-[1fr_1fr_44px] gap-3 items-end">
+                          <div className="space-y-2 min-w-0">
+                            <label className="text-sm font-bold text-slate-700 ml-1">
+                              Thông số {index + 1}
+                            </label>
+                            <input
+                              value={row.key}
+                              onChange={(event) => updateSpecRow(row.id, "key", event.target.value)}
+                              list="spec-key-options"
+                              placeholder="VD: cpu"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition"
+                            />
+                          </div>
+                          <div className="space-y-2 min-w-0">
+                            <label className="text-sm font-bold text-slate-700 ml-1">Giá trị</label>
+                            <input
+                              value={row.value}
+                              onChange={(event) => updateSpecRow(row.id, "value", event.target.value)}
+                              placeholder="VD: Intel Core i5"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-medium outline-none focus:border-blue-600 transition"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeSpecRow(row.id)}
+                            className="w-11 h-11 rounded-2xl text-slate-400 bg-slate-50 border border-slate-200 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition flex items-center justify-center"
+                            aria-label="Xóa thông số"
+                            title="Xóa thông số"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
 
                   <div className="space-y-2">
