@@ -542,7 +542,13 @@ function ProductListContent() {
                         <button
                           onClick={() => {
                             if (p.variants && p.variants.length > 0 && p.variants[0].id) {
-                              addToCart(p.variants[0].id, 1);
+                              addToCart(p.variants[0].id, 1, {
+                                productName: p.name,
+                                variantSku: p.variants[0].sku,
+                                imageUrl: getPrimaryImage(p),
+                                price: p.variants[0].price,
+                                snapshotPrice: p.variants[0].price,
+                              });
                             } else {
                               alert("Sản phẩm chưa có biến thể");
                             }
