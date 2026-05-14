@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden font-sans py-16">
       {/* Decorative background */}
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] -mr-96 -mt-96" />
       <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-purple-500/5 rounded-full blur-[120px] -ml-96 -mb-96" />
@@ -96,8 +96,8 @@ export default function ForgotPasswordPage() {
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="space-y-1.5">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                  <div className="flex flex-col gap-3">
                     <label htmlFor="email" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Địa chỉ email</label>
                     <div className="relative group">
                        <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors" />
