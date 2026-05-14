@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { type ApiError } from "@/lib/api";
 import { authApi } from "@/lib/api-endpoints";
 
@@ -10,6 +11,7 @@ export default function UserRegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,8 +51,7 @@ export default function UserRegisterPage() {
       confirmPassword,
     })
       .then((res) => {
-        setSuccess(`Đăng ký thành công. Đang chuyển hướng...`);
-        setTimeout(() => router.push("/user/login"), 2000);
+        setIsRegistered(true);
       })
       .catch((e: ApiError) => {
         setError(e?.message || "Đăng ký thất bại");
@@ -83,126 +84,150 @@ export default function UserRegisterPage() {
 
           {/* Form đăng ký */}
           <div className="flex-1 flex flex-col justify-center py-[50px] px-[40px] bg-white">
-            <h1 className="font-[700] text-[22px] text-black mb-[4px]">
-              Đăng ký
-            </h1>
-            <p className="text-[13px] text-[#888] mb-[28px]">
-              Tạo tài khoản mới để bắt đầu mua sắm.
-            </p>
-
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-y-[16px]">
-              <div>
-                <label htmlFor="fullName" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Họ và tên *
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  autoComplete="name"
-                  placeholder="Nguyễn Văn A"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
+            {isRegistered ? (
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                </div>
+                <h2 className="font-[700] text-[22px] text-black">
+                  Xác thực Email
+                </h2>
+                <p className="text-[14px] text-[#555] leading-relaxed">
+                  Chúng tôi đã gửi một email xác thực đến hòm thư của bạn. Vui lòng kiểm tra và nhấp vào liên kết để kích hoạt tài khoản.
+                </p>
+                <div className="pt-4">
+                  <Link href="/user/login" className="text-[#0088FF] font-[600] hover:underline">
+                    Đã xác thực? Quay lại đăng nhập
+                  </Link>
+                </div>
               </div>
+            ) : (
+              <>
+                <h1 className="font-[700] text-[22px] text-black mb-[4px]">
+                  Đăng ký
+                </h1>
+                <p className="text-[13px] text-[#888] mb-[28px]">
+                  Tạo tài khoản mới để bắt đầu mua sắm.
+                </p>
 
-              <div>
-                <label htmlFor="username" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Tên đăng nhập *
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  autoComplete="username"
-                  placeholder="nguyenvana"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-y-[16px]">
+                  <div>
+                    <label htmlFor="fullName" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Họ và tên *
+                    </label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      autoComplete="name"
+                      placeholder="Nguyễn Văn A"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="email" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="example@gmail.com"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="username" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Tên đăng nhập *
+                    </label>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      autoComplete="username"
+                      placeholder="nguyenvana"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="phoneNumber" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Số điện thoại *
-                </label>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  autoComplete="tel"
-                  placeholder="0xxxxxxxxx"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="email" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      autoComplete="email"
+                      placeholder="example@gmail.com"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="address" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Địa chỉ
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  autoComplete="street-address"
-                  placeholder="Số nhà, đường, quận/huyện..."
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="phoneNumber" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Số điện thoại *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      autoComplete="tel"
+                      placeholder="0xxxxxxxxx"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="password" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Mật khẩu *
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  autoComplete="new-password"
-                  placeholder="********"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="address" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Địa chỉ
+                    </label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      autoComplete="street-address"
+                      placeholder="Số nhà, đường, quận/huyện..."
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block font-[500] text-[13px] text-black mb-[6px]">
-                  Xác nhận mật khẩu *
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  autoComplete="new-password"
-                  placeholder="********"
-                  className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="password" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Mật khẩu *
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      autoComplete="new-password"
+                      placeholder="********"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              {error ? (
-                <p className="text-[12px] text-red-600 font-[600]">{error}</p>
-              ) : null}
-              {success ? (
-                <p className="text-[12px] text-green-700 font-[600]">{success}</p>
-              ) : null}
+                  <div>
+                    <label htmlFor="confirmPassword" className="block font-[500] text-[13px] text-black mb-[6px]">
+                      Xác nhận mật khẩu *
+                    </label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      autoComplete="new-password"
+                      placeholder="********"
+                      className="w-full border border-[#DEDEDE] rounded-[6px] px-[12px] py-[10px] text-[14px]"
+                    />
+                  </div>
 
-              <button
-                disabled={isLoading}
-                className="w-full py-[12px] bg-[#1A1A2E] text-white font-[700] rounded-[6px] hover:bg-red-500 transition-all disabled:opacity-70"
-              >
-                {isLoading ? "Đang đăng ký..." : "Đăng ký"}
-              </button>
-            </form>
+                  {error ? (
+                    <p className="text-[12px] text-red-600 font-[600]">{error}</p>
+                  ) : null}
+                  {success ? (
+                    <p className="text-[12px] text-green-700 font-[600]">{success}</p>
+                  ) : null}
+
+                  <button
+                    disabled={isLoading}
+                    className="w-full py-[12px] bg-[#1A1A2E] text-white font-[700] rounded-[6px] hover:bg-red-500 transition-all disabled:opacity-70"
+                  >
+                    {isLoading ? "Đang đăng ký..." : "Đăng ký"}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </div>

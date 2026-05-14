@@ -159,9 +159,6 @@ function UserLoginContent() {
                   <label htmlFor="password" className="block font-[500] text-[13px] text-black">
                     Mật khẩu *
                   </label>
-                  <Link href="/forgot-password" className="text-[12px] text-[#0088FF] hover:underline font-[500]">
-                    Quên mật khẩu?
-                  </Link>
                 </div>
                 <input
                   type="password"
@@ -171,6 +168,11 @@ function UserLoginContent() {
                   placeholder="••••••••"
                   className="w-full h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[16px] font-[500] text-[14px] text-black bg-[#FAFAFA] focus:outline-none focus:border-[#0088FF] focus:ring-2 focus:ring-[#0088FF]/20 transition"
                 />
+                <div className="flex justify-end mt-[6px]">
+                  <Link href="/forgot-password" className="text-[12px] text-[#0088FF] hover:underline font-[500]">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
               </div>
 
               {error ? (

@@ -113,8 +113,8 @@ function ResetPasswordForm() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-1.5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+              <div className="flex flex-col gap-3">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Mật khẩu mới</label>
                 <div className="relative">
                   <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="flex flex-col gap-3">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Xác nhận mật khẩu</label>
                 <div className="relative">
                   <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
