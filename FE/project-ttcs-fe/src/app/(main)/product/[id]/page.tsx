@@ -380,7 +380,13 @@ export default function ProductDetailPage() {
                 <button 
                   onClick={() => {
                     if (currentVariant?.id) {
-                      addToCart(currentVariant.id, 1);
+                      addToCart(currentVariant.id, 1, {
+                        productName: product.name,
+                        variantSku: currentVariant.sku,
+                        imageUrl: product.variants?.[0]?.images?.[0]?.imageUrl,
+                        price: currentVariant.price,
+                        snapshotPrice: currentVariant.price,
+                      });
                     } else {
                       alert("Sản phẩm chưa có biến thể");
                     }

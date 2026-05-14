@@ -117,7 +117,13 @@ export default function HomePage() {
       return;
     }
 
-    addToCart(variantId, 1);
+    addToCart(variantId, 1, {
+      productName: product.name,
+      variantSku: product.variants?.[0]?.sku,
+      imageUrl: getPrimaryImage(product),
+      price: product.variants?.[0]?.price,
+      snapshotPrice: product.variants?.[0]?.price,
+    });
   };
 
   return (
