@@ -270,28 +270,37 @@ export default function AdminUsersPage() {
 
       <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full min-w-[1180px] table-fixed text-left">
+            <colgroup>
+              <col className="w-[15%]" />
+              <col className="w-[26%]" />
+              <col className="w-[13%]" />
+              <col className="w-[14%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[10%]" />
+            </colgroup>
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Người dùng
                 </th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Liên hệ
                 </th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Vai trò
                 </th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Chi nhánh
                 </th>
-                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Trạng thái
                 </th>
                 <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
                   Ngày tạo / Cập nhật
                 </th>
-                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">
+                <th className="px-2 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">
                   Thao tác
                 </th>
               </tr>
@@ -300,22 +309,22 @@ export default function AdminUsersPage() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, index) => (
                   <tr key={index} className="animate-pulse">
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       <div className="h-12 bg-slate-100 rounded-2xl w-48" />
                     </td>
                     <td className="px-6 py-6">
                       <div className="h-12 bg-slate-100 rounded-xl w-32" />
                     </td>
-                    <td className="px-6 py-6">
-                      <div className="h-10 bg-slate-100 rounded-xl w-40" />
+                    <td className="px-4 py-6">
+                      <div className="h-10 bg-slate-100 rounded-xl w-32" />
                     </td>
-                    <td className="px-6 py-6">
-                      <div className="h-10 bg-slate-100 rounded-xl w-40" />
+                    <td className="px-4 py-6">
+                      <div className="h-10 bg-slate-100 rounded-xl w-32" />
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-6">
                       <div className="h-10 bg-slate-100 rounded-xl w-28" />
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-6">
                       <div className="h-10 bg-slate-100 rounded-xl ml-auto w-24" />
                     </td>
                   </tr>
@@ -332,7 +341,7 @@ export default function AdminUsersPage() {
               ) : (
                 paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black">
                           {user.fullName?.charAt(0).toUpperCase() || (
@@ -350,23 +359,23 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-6 space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Mail className="w-3.5 h-3.5" />
-                        <span className="font-medium">{user.email || "---"}</span>
+                      <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        <span className="min-w-0 truncate font-medium">{user.email || "---"}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Phone className="w-3.5 h-3.5" />
+                      <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500">
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
                         <span className="font-medium">{user.phoneNumber || "---"}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-6 align-top">
+                    <td className="px-4 py-6 align-top">
                       <span
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getRoleBadgeClasses(
+                        className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getRoleBadgeClasses(
                           String(user.role || "CUSTOMER")
                         )}`}
                       >
-                        <Shield className="w-3 h-3" />
-                        {user.role || "CUSTOMER"}
+                        <Shield className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{user.role || "CUSTOMER"}</span>
                       </span>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <select
@@ -377,7 +386,7 @@ export default function AdminUsersPage() {
                               [user.id ?? 0]: event.target.value,
                             }))
                           }
-                          className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium"
+                          className="w-32 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium"
                         >
                           {ROLE_OPTIONS.map((role) => (
                             <option key={role} value={role}>
@@ -389,16 +398,16 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => handleUpdateRole(user.id)}
                           disabled={actionUserId === user.id}
-                          className="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition disabled:opacity-70"
+                          className="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-wide hover:bg-blue-600 transition disabled:opacity-70"
                         >
                           Lưu role
                         </button>
                       </div>
                     </td>
-                    <td className="px-6 py-6 align-top">
-                      <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                        <Building2 className="w-4 h-4" />
-                        <span className="font-medium">
+                    <td className="px-4 py-6 align-top">
+                      <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 mb-3">
+                        <Building2 className="w-4 h-4 shrink-0" />
+                        <span className="min-w-0 truncate font-medium">
                           {user.branchId ? `Chi nhánh #${user.branchId}` : "Chưa gán"}
                         </span>
                       </div>
@@ -411,7 +420,7 @@ export default function AdminUsersPage() {
                               [user.id ?? 0]: event.target.value,
                             }))
                           }
-                          className="w-40 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium"
+                          className="w-36 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium"
                         >
                           <option value="">Chọn chi nhánh</option>
                           {branches.map((branch) => (
@@ -424,7 +433,7 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => handleAssignBranch(user.id)}
                           disabled={actionUserId === user.id}
-                          className="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition disabled:opacity-70"
+                          className="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-black uppercase tracking-wide hover:bg-blue-600 hover:text-white transition disabled:opacity-70"
                         >
                           Gán CN
                         </button>
@@ -435,7 +444,7 @@ export default function AdminUsersPage() {
                         type="button"
                         onClick={() => handleToggleStatus(user)}
                         disabled={actionUserId === user.id}
-                        className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition ${
+                        className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wide whitespace-nowrap transition ${
                           user.enabled === false
                             ? "bg-red-50 text-red-600 hover:bg-red-100"
                             : "bg-green-50 text-green-700 hover:bg-green-100"
@@ -460,11 +469,11 @@ export default function AdminUsersPage() {
                           : "---"}
                       </p>
                     </td>
-                    <td className="px-4 py-6 text-right">
+                    <td className="px-2 py-6 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/admin/users/${user.id}`}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition shadow-sm bg-white"
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition shadow-sm bg-white"
                           title="Xem chi tiết"
                         >
                           <Eye className="w-4 h-4" />
@@ -472,7 +481,7 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           onClick={() => openEditModal(user)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition shadow-sm bg-white"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition shadow-sm bg-white"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -480,7 +489,7 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => handleDeleteUser(user)}
                           disabled={actionUserId === user.id}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition shadow-sm bg-white disabled:opacity-60"
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition shadow-sm bg-white disabled:opacity-60"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
